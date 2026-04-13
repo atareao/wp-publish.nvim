@@ -64,10 +64,24 @@ end
 
 function M.publish()
     local config = {
-        url = os.getenv("ATAREAO_URL"),
-        user = os.getenv("ATAREAO_USER"),
-        pass = os.getenv("ATAREAO_APP_PASS"),
+        url = os.getenv("WP_URL"),
+        user = os.getenv("WP_USER"),
+        pass = os.getenv("WP_APP_PASS"),
     }
+
+    -- VALIDATION: Check if variables are missing BEFORE using them
+    if not config.url then
+        vim.notify("[wp-publish] Error: WP_URL is not set in your environment.", vim.log.levels.ERROR)
+        return
+    end
+    if not config.user then
+        vim.notify("[wp-publish] Error: WP_USER is not set.", vim.log.levels.ERROR)
+        return
+    end
+    if not config.pass then
+        vim.notify("[wp-publish] Error: WP_APP_PASS is not set.", vim.log.levels.ERROR)
+        return
+    end
     
     local frontmatter, content = parse_frontmatter() -- (Assume previous parser function)
     local url = config.url
