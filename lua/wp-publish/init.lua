@@ -118,19 +118,13 @@ function M.publish()
     local json_payload = vim.fn.json_encode(payload)
     local auth = vim.base64.encode(config.user .. ":" .. config.pass)
     
-    -- Using POST with an ID in the URL tells WordPress to update the existing record
-    local cmd = string.format(
-        "curl -s -X POST %s -H 'Authorization: Basic %s' -H 'Content-Type: application/json' -d %s",
-        url, auth, vim.fn.shellescape(json_payload)
-    )
-
     vim.notify("🚀 Publishing to ...", vim.log.levels.INFO)
 
     vim.fn.jobstart({
         "curl", "-s", "-X", "POST", url,
         "-H", "Authorization: Basic " .. auth,
         "-H", "Content-Type: application/json",
-        "-d", payload
+        "-d", json_payload
     }, {
         stdout_buffered = true,
         on_stdout = function(_, data)
