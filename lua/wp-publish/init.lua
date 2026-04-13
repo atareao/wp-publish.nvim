@@ -117,6 +117,7 @@ function M.publish()
 
     local json_payload = vim.fn.json_encode(payload)
     local auth = vim.base64.encode(config.user .. ":" .. config.pass)
+    local stdout_data = {}
     
     vim.notify("🚀 Publishing to ...", vim.log.levels.INFO)
 
