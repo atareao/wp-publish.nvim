@@ -130,7 +130,7 @@ function M.publish()
     local payload = {
         title = frontmatter.title,
         content = content,
-        status = "publish",
+        status = frontmatter.status or "draft",
     }
 
     if is_podcast then
@@ -160,20 +160,24 @@ function M.publish()
                 end
             end
         end,
-        on_exit = function(_, code)
-            if code == 0 then
-                local response = table.concat(stdout_data, "")
-                print("RAW RESPONSE: " .. response)
-                local decoded = vim.fn.json_decode(response)
-                if decoded and decoded.id then
-                    local action = post_id and "Updated" or "Created"
-                    vim.notify("✅ " .. action .. " successfully! ID: " .. decoded.id, vim.log.levels.INFO)
+        on_exit = function(j, code)
+            -- This will show up in the command line regardless of JSON success
+            vim.schedule(function()
+                print("Job finished with code: " .. code)
+                
+                if code == 0 then
+                    local response_body = table.concat(stdout_data, "")
+                    if response_body == "" then
+                        vim.notify("✅ Success, but response was empty", vim.log.levels.INFO)
+                    else
+                        vim.notify("✅ Published! Check :messages for raw data", vim.log.levels.INFO)
+                        -- Also print to :messages just in case
+                        print("WordPress Response: " .. response_body)
+                    end
                 else
-                    vim.notify("⚠️ Sent, but the response looked strange.", vim.log.levels.WARN)
+                    vim.notify("❌ Job failed with code " .. code, vim.log.levels.ERROR)
                 end
-            else
-                vim.notify("❌ Networking error: curl failed with code " .. code, vim.log.levels.ERROR)
-            end
+            end)
         end
     })
 end
