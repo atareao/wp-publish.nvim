@@ -138,8 +138,8 @@ function M.publish()
         on_exit = function(_, code)
             if code == 0 then
                 local response = table.concat(stdout_data, "")
+                print("RAW RESPONSE: " .. response)
                 local decoded = vim.fn.json_decode(response)
-                
                 if decoded and decoded.id then
                     local action = post_id and "Updated" or "Created"
                     vim.notify("✅ " .. action .. " successfully! ID: " .. decoded.id, vim.log.levels.INFO)
