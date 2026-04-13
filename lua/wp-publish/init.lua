@@ -44,17 +44,22 @@ end
 
 -- Helper to find post ID by episode number
 local function find_post_id(config, episode_number)
+    -- Ensure episode_number is treated as a string for the URL
     local base_url = config.url:gsub("/posts$", "/podcast")
-    local search_url = string.format("%s?meta_key=number&meta_value=%s", base_url, episode_number)
+    local search_url = string.format("%s?meta_key=number&meta_value=%s&status=any", base_url, episode_number)
     
     local auth = vim.base64.encode(config.user .. ":" .. config.pass)
-    
     local cmd = string.format("curl -s -H 'Authorization: Basic %s' '%s'", auth, search_url)
     
     local result = vim.fn.system(cmd)
-    local data = vim.fn.json_decode(result)
     
-    if data and type(data) == "table" and #data > 0 then
+    -- Safety check: if curl fails or returns nothing
+    if result == "" then return nil end
+    
+    local ok, data = pcall(vim.fn.json_decode, result)
+    
+    -- Check if data is a list and has at least one entry
+    if ok and type(data) == "table" and data[1] and data[1].id then
         return data[1].id
     end
     return nil
