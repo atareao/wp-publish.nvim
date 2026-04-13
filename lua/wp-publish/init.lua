@@ -100,12 +100,19 @@ function M.publish()
         url = url:gsub("/posts$", "/podcast")
         -- Search if it exists
         post_id = find_post_id(config, frontmatter.episode)
+        -- DEBUG: See if we found an ID
+        if post_id then
+            vim.notify("Found existing episode ID: " .. post_id, vim.log.levels.INFO)
+        else
+            vim.notify("No existing episode found. Creating new...", vim.log.levels.INFO)
+        end
     end
 
     -- If post_id exists, we append it to the URL to perform an UPDATE
     if post_id then
         url = url .. "/" .. post_id
     end
+    print("TARGET URL: " .. url)
 
     local payload = {
         title = frontmatter.title,
