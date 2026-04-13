@@ -62,12 +62,17 @@ local function find_post_id(config, episode_number)
     return nil
 end
 
-function M.publish()
-    local config = {
+local function get_config()
+    local cfg = {
         url = os.getenv("WP_URL"),
         user = os.getenv("WP_USER"),
         pass = os.getenv("WP_APP_PASS"),
     }
+    return cfg
+end
+
+function M.publish()
+    local config = get_config()
 
     -- VALIDATION: Check if variables are missing BEFORE using them
     if not config.url then
