@@ -124,13 +124,35 @@ function M.publish()
         url, auth, vim.fn.shellescape(json_payload)
     )
 
-    vim.fn.jobstart(cmd, {
+    vim.notify("🚀 Publishing to ...", vim.log.levels.INFO)
+
+    vim.fn.jobstart({
+        "curl", "-s", "-X", "POST", url,
+        "-H", "Authorization: Basic " .. auth,
+        "-H", "Content-Type: application/json",
+        "-d", payload
+    }, {
+        stdout_buffered = true,
+        on_stdout = function(_, data)
+            if data then
+                for _, line in ipairs(data) do
+                    if line ~= "" then table.insert(stdout_data, line) end
+                end
+            end
+        end,
         on_exit = function(_, code)
-            local action = post_id and "Updated" or "Created"
             if code == 0 then
-                vim.notify(action .. " " .. (is_podcast and "Podcast" or "Post"), vim.log.levels.INFO)
+                local response = table.concat(stdout_data, "")
+                local decoded = vim.fn.json_decode(response)
+                
+                if decoded and decoded.id then
+                    local action = post_id and "Updated" or "Created"
+                    vim.notify("✅ " .. action .. " successfully! ID: " .. decoded.id, vim.log.levels.INFO)
+                else
+                    vim.notify("⚠️ Sent, but the response looked strange.", vim.log.levels.WARN)
+                end
             else
-                vim.notify("Error during " .. action, vim.log.levels.ERROR)
+                vim.notify("❌ Networking error: curl failed with code " .. code, vim.log.levels.ERROR)
             end
         end
     })
