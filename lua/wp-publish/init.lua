@@ -44,34 +44,38 @@ end
 
 -- Helper to find post ID by episode number
 local function find_post_id(config, episode_number)
-    -- Ensure episode_number is treated as a string for the URL
     local base_url = config.url:gsub("/posts$", "/podcast")
-    local search_url = string.format("%s?meta_key=number&meta_value=%s&status=any", base_url, episode_number)
+    -- We add 'per_page=1' to speed it up
+    local search_url = string.format("%s?meta_key=number&meta_value=%s&per_page=1", base_url, episode_number)
     
     local auth = vim.base64.encode(config.user .. ":" .. config.pass)
     local cmd = string.format("curl -s -H 'Authorization: Basic %s' '%s'", auth, search_url)
     
     local result = vim.fn.system(cmd)
-    
-    -- Safety check: if curl fails or returns nothing
     if result == "" then return nil end
     
     local ok, data = pcall(vim.fn.json_decode, result)
     
-    -- Check if data is a list and has at least one entry
-    if ok and type(data) == "table" and data[1] and data[1].id then
-        return data[1].id
-    end
-    return nil
-end
+    -- VALIDATION STEP:
+    -- We check if the returned post's meta 'number' actually matches our 'episode_number'
+    if ok and type(data) == "table" and data[1] then
+        local found_id = data[1].id
+        local found_number = nil
+        
+        -- WordPress usually puts meta in the 'meta' or 'acf' field in the JSON response
+        if data[1].meta and data[1].meta.number then
+            found_number = tostring(data[1].meta.number)
+        end
 
-local function get_config()
-    local cfg = {
-        url = os.getenv("WP_URL"),
-        user = os.getenv("WP_USER"),
-        pass = os.getenv("WP_APP_PASS"),
-    }
-    return cfg
+        -- If the numbers don't match, it's a false positive!
+        if found_number == tostring(episode_number) then
+            return found_id
+        else
+            print(string.format("Found ID %s but number was %s (expected %s). Ignoring.", found_id, found_number, episode_number))
+        end
+    end
+    
+    return nil
 end
 
 function M.publish()
