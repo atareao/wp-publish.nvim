@@ -127,9 +127,13 @@ function M.publish()
     end
     print("TARGET URL: " .. url)
 
+    local handle = io.popen("echo " .. vim.fn.shellescape(content) .. " | pandoc -f markdown -t html")
+    local html_content = handle:read("*a")
+    handle:close()
+
     local payload = {
         title = frontmatter.title,
-        content = content,
+        content = html_content,
         status = frontmatter.status or "draft",
     }
 
