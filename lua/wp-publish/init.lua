@@ -1,6 +1,10 @@
 local M = {}
 
 function M.update_timestamp()
+    -- Only run if the buffer has been modified (prevents unnecessary updates)
+    if not vim.bo.modified then
+        return
+    end
     local cursor_pos = vim.api.nvim_win_get_cursor(0)
     local last_line = math.min(20, vim.api.nvim_buf_line_count(0)) -- Only check the first 20 lines
     local lines = vim.api.nvim_buf_get_lines(0, 0, last_line, false)
@@ -10,9 +14,9 @@ function M.update_timestamp()
         -- Search for the line starting with 'updated:'
         if line:match("^updated:") then
             local new_line = "updated: " .. current_time
-            vim.api.nvim_buf_set_lines(0, i - 1, i, false, { new_line })
+
             pcall(vim.cmd, "undojoin") -- Join with previous undo step for cleaner history
-            -- Restore cursor so it doesn't jump
+
             vim.api.nvim_buf_set_lines(0, i - 1, i, false, { new_line })
             vim.api.nvim_win_set_cursor(0, cursor_pos)
             break
