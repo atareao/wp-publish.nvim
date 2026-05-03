@@ -10,7 +10,10 @@ function M.update_timestamp()
         -- Search for the line starting with 'updated:'
         if line:match("^updated:") then
             local new_line = "updated: " .. current_time
+            local old_undolevels = vim.bo.undolevels
+            vim.bo.undolevels = -1
             vim.api.nvim_buf_set_lines(0, i - 1, i, false, { new_line })
+            vim.bo.undolevels = old_undolevels
             -- Restore cursor so it doesn't jump
             vim.api.nvim_win_set_cursor(0, cursor_pos)
             break
