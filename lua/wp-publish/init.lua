@@ -10,36 +10,10 @@ function M.update_timestamp()
         -- Search for the line starting with 'updated:'
         if line:match("^updated:") then
             local new_line = "updated: " .. current_time
-
-            -- Save the undo tree to a temp file, read it into memory, delete the file.
-            -- rundo needs a file path, so we write back from memory when restoring.
-            local tmpfile = vim.fn.tempname()
-            local saved_ok = pcall(vim.cmd, "silent wundo! " .. vim.fn.fnameescape(tmpfile))
-            local undo_data = nil
-            if saved_ok then
-                local f = io.open(tmpfile, "rb")
-                if f then
-                    undo_data = f:read("*a")
-                    f:close()
-                end
-                vim.fn.delete(tmpfile)
-            end
-
             vim.api.nvim_buf_set_lines(0, i - 1, i, false, { new_line })
-
-            -- Restore undo tree from memory so the timestamp change is invisible to undo.
-            if undo_data then
-                local tmpfile2 = vim.fn.tempname()
-                local f2 = io.open(tmpfile2, "wb")
-                if f2 then
-                    f2:write(undo_data)
-                    f2:close()
-                    pcall(vim.cmd, "silent rundo " .. vim.fn.fnameescape(tmpfile2))
-                    vim.fn.delete(tmpfile2)
-                end
-            end
-
+            pcall(vim.cmd, "undojoin") -- Join with previous undo step for cleaner history
             -- Restore cursor so it doesn't jump
+            vim.api.nvim_buf_set_lines(0, i - 1, i, false, { new_line })
             vim.api.nvim_win_set_cursor(0, cursor_pos)
             break
         end
